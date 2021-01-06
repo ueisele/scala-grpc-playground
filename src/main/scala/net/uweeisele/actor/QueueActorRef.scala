@@ -1,8 +1,8 @@
-package net.uweeisele.worker
+package net.uweeisele.actor
 
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-class QueueWorkerRef[-T](queue: BlockingQueue[T], shutdown: AtomicBoolean) extends WorkerRef[T] {
+class QueueActorRef[-T](queue: BlockingQueue[T], shutdown: AtomicBoolean) extends ActorRef[T] {
   override def tell(message: T): Unit = if (!shutdown.get() && message != null) queue.put(message)
 }

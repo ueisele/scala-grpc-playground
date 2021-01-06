@@ -1,4 +1,4 @@
-package net.uweeisele.worker
+package net.uweeisele.actor
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.{Duration, FiniteDuration}

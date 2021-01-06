@@ -1,4 +1,4 @@
-package net.uweeisele.worker
+package net.uweeisele.actor
 
 import monix.execution.Scheduler
 
@@ -6,17 +6,17 @@ import java.util.concurrent.{TimeUnit, TimeoutException}
 import scala.concurrent.{ExecutionContext, Promise}
 import scala.util.{Failure, Success}
 
-object PromiseWorkerRef {
+object PromiseActorRef {
 
-  def apply[T](promise: Promise[T])(implicit timeout: Timeout, ec: ExecutionContext): PromiseWorkerRef[T] = {
+  def apply[T](promise: Promise[T])(implicit timeout: Timeout, ec: ExecutionContext): PromiseActorRef[T] = {
     val scheduler = Scheduler(ec)
     scheduler.scheduleOnce(timeout.duration.toMillis, TimeUnit.MILLISECONDS, () => {
       promise.tryComplete(Failure(new TimeoutException()))
     })
-    new PromiseWorkerRef[T](promise)
+    new PromiseActorRef[T](promise)
   }
 }
 
-class PromiseWorkerRef[-T](promise: Promise[T]) extends WorkerRef[T] {
+class PromiseActorRef[-T](promise: Promise[T]) extends ActorRef[T] {
   override def tell(message: T): Unit = promise.tryComplete(Success(message))
 }

@@ -1,4 +1,4 @@
-package net.uweeisele.worker
+package net.uweeisele.actor
 
 import java.lang.Thread.currentThread
 import java.util
@@ -9,22 +9,22 @@ import java.util.logging.{Level, Logger}
 import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters._
 
-object Worker {
-  def apply[T](initialBehaviour: Behaviour[T])(implicit ec: ExecutionContext): Worker[T] = {
-    val worker = new Worker[T](initialBehaviour, new LinkedBlockingQueue[T]())
+object Actor {
+  def apply[T](initialBehaviour: Behaviour[T])(implicit ec: ExecutionContext): Actor[T] = {
+    val worker = new Actor[T](initialBehaviour, new LinkedBlockingQueue[T]())
     ec.execute(worker)
     worker
   }
 }
 
-class Worker[T](initialBehaviour: Behaviour[T], queue: BlockingQueue[T]) extends Runnable {
+class Actor[T](initialBehaviour: Behaviour[T], queue: BlockingQueue[T]) extends Runnable {
 
-  private[this] val logger = Logger.getLogger(Worker.getClass.getName)
+  private[this] val logger = Logger.getLogger(Actor.getClass.getName)
 
   private[this] val shutdown: AtomicBoolean = new AtomicBoolean(false)
   private[this] val terminationJoin: CountDownLatch = new CountDownLatch(1)
 
-  final val ref: WorkerRef[T] = new QueueWorkerRef[T](queue, shutdown)
+  final val ref: ActorRef[T] = new QueueActorRef[T](queue, shutdown)
 
   override def run(): Unit = {
     var behaviour = initialBehaviour

@@ -1,7 +1,7 @@
 package net.uweeisele.grpc.counter.core
 
 import net.uweeisele.grpc.counter._
-import net.uweeisele.worker.{Behaviour, WorkerRef}
+import net.uweeisele.actor.{Behaviour, ActorRef}
 
 import java.util.logging.Logger
 
@@ -13,7 +13,7 @@ class AtomicCounterBehaviourObj(var value: Long) extends Behaviour[AtomicCounter
 
   private val logger: Logger = Logger.getLogger(AtomicCounterBehaviourFun.getClass.getName)
 
-  override def apply(message: AtomicCounterMessage, self: WorkerRef[AtomicCounterMessage]): Behaviour[AtomicCounterMessage] = {
+  override def apply(message: AtomicCounterMessage, self: ActorRef[AtomicCounterMessage]): Behaviour[AtomicCounterMessage] = {
     message match {
       case SetCommand(SetRequest(newValue, _), sender) =>
         value = newValue

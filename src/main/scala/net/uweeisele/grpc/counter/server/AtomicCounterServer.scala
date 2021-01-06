@@ -4,7 +4,7 @@ import io.grpc._
 import io.grpc.netty.NettyServerBuilder
 import net.uweeisele.grpc.counter.AtomicCounterGrpc
 import net.uweeisele.grpc.counter.core.{AtomicCounterBehaviourFun, AtomicCounterBehaviourObj, AtomicCounterMessage}
-import net.uweeisele.worker.Worker
+import net.uweeisele.actor.Actor
 
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
@@ -22,16 +22,16 @@ object AtomicCounterServer {
 }
 
 class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
-  private[this] var worker: Worker[AtomicCounterMessage] = null
+  private[this] var actor: Actor[AtomicCounterMessage] = null
   private[this] var server: Server = null
 
   def start(): Unit = {
-    worker = Worker(AtomicCounterBehaviourFun(0))
-    //worker = Worker(AtomicCounterBehaviourObj(0))
+    actor = Actor(AtomicCounterBehaviourFun(0))
+    //actor = Worker(AtomicCounterBehaviourObj(0))
     server = NettyServerBuilder
       .forPort(50051)
       .maxConcurrentCallsPerConnection(1)
-      .addService(AtomicCounterGrpc.bindService(AtomicCounterImpl(worker.ref), executionContext))
+      .addService(AtomicCounterGrpc.bindService(AtomicCounterImpl(actor.ref), executionContext))
       //.addService(AtomicCounterGrpc.bindService(new AtomicCounterRefImpl(), executionContext))
       .build()
       .start()
@@ -47,8 +47,8 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.shutdown()
     }
-    if (worker != null) {
-      worker.shutdown()
+    if (actor != null) {
+      actor.shutdown()
     }
   }
 
@@ -56,8 +56,8 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.awaitTermination(timeout, timeUnit)
     }
-    if (worker != null) {
-      worker.awaitTermination(timeout, timeUnit)
+    if (actor != null) {
+      actor.awaitTermination(timeout, timeUnit)
     }
   }
 
@@ -65,8 +65,8 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.awaitTermination()
     }
-    if (worker != null) {
-      worker.awaitTermination()
+    if (actor != null) {
+      actor.awaitTermination()
     }
   }
 
