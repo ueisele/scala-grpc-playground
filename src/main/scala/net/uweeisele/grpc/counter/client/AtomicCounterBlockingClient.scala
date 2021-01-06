@@ -1,6 +1,7 @@
 package net.uweeisele.grpc.counter.client
 
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall
+import io.grpc.netty.NettyChannelBuilder
 import io.grpc.{CallOptions, Channel, ClientCall, ClientInterceptor, ManagedChannel, ManagedChannelBuilder, Metadata, MethodDescriptor, Status, StatusRuntimeException}
 import net.uweeisele.grpc.counter.AtomicCounterGrpc.AtomicCounterBlockingStub
 import net.uweeisele.grpc.counter.{AtomicCounterGrpc, IncrementAndGetRequest}
@@ -10,7 +11,7 @@ import java.util.logging.{Level, Logger}
 
 object AtomicCounterBlockingClient {
   def apply(host: String, port: Int): AtomicCounterBlockingClient = {
-    val channel = ManagedChannelBuilder
+    val channel = NettyChannelBuilder
       .forAddress(host, port)
       .usePlaintext()
       .intercept(new ClientInterceptor {

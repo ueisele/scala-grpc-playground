@@ -17,8 +17,8 @@ object AtomicCounterAsyncMultiClient {
 
   def main(args: Array[String]): Unit = {
     implicit val ec: ExecutionContext = ExecutionContext.global
-    val expectedClients = 1
-    val expectedCallsPerClient = 100000
+    val expectedClients = 100
+    val expectedCallsPerClient = 100
     val currentValue = getCurrentCounterValue()
     println(s"Current Value: ${currentValue}")
     val clients: ListBuffer[Future[Long]] = ListBuffer()

@@ -3,7 +3,7 @@ package net.uweeisele.grpc.counter.server
 import io.grpc._
 import io.grpc.netty.NettyServerBuilder
 import net.uweeisele.grpc.counter.AtomicCounterGrpc
-import net.uweeisele.grpc.counter.core.{AtomicCounterBehaviour, AtomicCounterMessage}
+import net.uweeisele.grpc.counter.core.{AtomicCounterBehaviourFun, AtomicCounterBehaviourObj, AtomicCounterMessage}
 import net.uweeisele.worker.Worker
 
 import java.util.concurrent.TimeUnit
@@ -14,7 +14,8 @@ object AtomicCounterServer {
   private val logger = Logger.getLogger(classOf[AtomicCounterServer].getName)
 
   def main(args: Array[String]): Unit = {
-    val server = new AtomicCounterServer()(ExecutionContext.global)
+    implicit val ec: ExecutionContext = ExecutionContext.global
+    val server = new AtomicCounterServer()
     server.start()
     server.blockUntilShutdown()
   }
@@ -25,10 +26,11 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
   def start(): Unit = {
-    worker = Worker(AtomicCounterBehaviour(0))
+    worker = Worker(AtomicCounterBehaviourFun(0))
+    //worker = Worker(AtomicCounterBehaviourObj(0))
     server = NettyServerBuilder
       .forPort(50051)
-      .maxConcurrentCallsPerConnection(1)
+      //.maxConcurrentCallsPerConnection(1)
       .addService(AtomicCounterGrpc.bindService(AtomicCounterImpl(worker.ref), executionContext))
       //.addService(AtomicCounterGrpc.bindService(new AtomicCounterRefImpl(), executionContext))
       .build()
