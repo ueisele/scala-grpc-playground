@@ -18,7 +18,7 @@ object ActorWorker {
 
 class ActorWorker(mailbox: Mailbox) extends Runnable {
 
-  private[this] val logger = Logger.getLogger(SimpleActorWorker.getClass.getName)
+  private[this] val logger = Logger.getLogger(ActorWorker.getClass.getName)
 
   private[this] val shutdown: AtomicBoolean = new AtomicBoolean(false)
   private[this] val terminationJoin: CountDownLatch = new CountDownLatch(1)
