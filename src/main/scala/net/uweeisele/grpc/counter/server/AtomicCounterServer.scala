@@ -2,9 +2,9 @@ package net.uweeisele.grpc.counter.server
 
 import io.grpc._
 import io.grpc.netty.NettyServerBuilder
+import net.uweeisele.actor.ActorSystem
 import net.uweeisele.grpc.counter.AtomicCounterGrpc
-import net.uweeisele.grpc.counter.core.{AtomicCounterBehaviourFun, AtomicCounterBehaviourObj, AtomicCounterMessage}
-import net.uweeisele.actor.Actor
+import net.uweeisele.grpc.counter.core.AtomicCounterBehaviourFun
 
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
@@ -22,11 +22,12 @@ object AtomicCounterServer {
 }
 
 class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
-  private[this] var actor: Actor[AtomicCounterMessage] = null
+  implicit private[this] var actorSystem: ActorSystem = null
   private[this] var server: Server = null
 
   def start(): Unit = {
-    actor = Actor(AtomicCounterBehaviourFun(0))
+    actorSystem = ActorSystem()
+    val actor = actorSystem.actor(AtomicCounterBehaviourFun(0))
     //actor = Worker(AtomicCounterBehaviourObj(0))
     server = NettyServerBuilder
       .forPort(50051)
@@ -47,8 +48,8 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.shutdown()
     }
-    if (actor != null) {
-      actor.shutdown()
+    if (actorSystem != null) {
+      actorSystem.shutdown()
     }
   }
 
@@ -56,8 +57,8 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.awaitTermination(timeout, timeUnit)
     }
-    if (actor != null) {
-      actor.awaitTermination(timeout, timeUnit)
+    if (actorSystem != null) {
+      actorSystem.awaitTermination(timeout, timeUnit)
     }
   }
 
@@ -65,8 +66,8 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.awaitTermination()
     }
-    if (actor != null) {
-      actor.awaitTermination()
+    if (actorSystem != null) {
+      actorSystem.awaitTermination()
     }
   }
 

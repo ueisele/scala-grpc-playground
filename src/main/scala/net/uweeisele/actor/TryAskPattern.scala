@@ -9,6 +9,7 @@ object TryAskPattern {
 
   implicit final class TryAskable[Req](val ref: ActorRef[Req]) extends AnyVal {
 
+    @throws[InterruptedException]
     def tryAsk[Res](message: ActorRef[Try[Res]] => Req)(implicit timeout: Timeout, ec: ExecutionContext): Future[Res] = {
       ref.ask(message) transform { tryable =>
         tryable match {
@@ -19,6 +20,7 @@ object TryAskPattern {
       }
     }
 
+    @throws[InterruptedException]
     def ??[Res](message: ActorRef[Try[Res]] => Req)(implicit timeout: Timeout, ec: ExecutionContext): Future[Res] = tryAsk(message)
   }
 }

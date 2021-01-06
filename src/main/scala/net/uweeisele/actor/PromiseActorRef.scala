@@ -18,5 +18,5 @@ object PromiseActorRef {
 }
 
 class PromiseActorRef[-T](promise: Promise[T]) extends ActorRef[T] {
-  override def tell(message: T): Unit = promise.tryComplete(Success(message))
+  override def tell(message: T): Unit = if (message != null) promise.tryComplete(Success(message))
 }

@@ -1,78 +1,25 @@
 package net.uweeisele.actor
 
-import java.lang.Thread.currentThread
-import java.util
-import java.util.concurrent.TimeUnit.{MILLISECONDS, SECONDS}
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{BlockingQueue, CountDownLatch, LinkedBlockingQueue, TimeUnit}
 import java.util.logging.{Level, Logger}
-import scala.concurrent.ExecutionContext
-import scala.jdk.CollectionConverters._
 
 object Actor {
-  def apply[T](initialBehaviour: Behaviour[T])(implicit ec: ExecutionContext): Actor[T] = {
-    val worker = new Actor[T](initialBehaviour, new LinkedBlockingQueue[T]())
-    ec.execute(worker)
-    worker
-  }
+  def apply[Req](behaviour: Behaviour[Req])(implicit actorSystem: ActorSystem): Actor[Req] = actorSystem.actor(behaviour)
 }
 
-class Actor[T](initialBehaviour: Behaviour[T], queue: BlockingQueue[T]) extends Runnable {
+class Actor[-Req](initialBehaviour: Behaviour[Req], mailbox: Mailbox) extends Receiver[Req] {
 
-  private[this] val logger = Logger.getLogger(Actor.getClass.getName)
+  private[this] val logger = Logger.getLogger(classOf[Actor[Req]].getName)
 
-  private[this] val shutdown: AtomicBoolean = new AtomicBoolean(false)
-  private[this] val terminationJoin: CountDownLatch = new CountDownLatch(1)
+  private[this] var behaviour: Behaviour[Req] = initialBehaviour
 
-  final val ref: ActorRef[T] = new QueueActorRef[T](queue, shutdown)
+  final val ref: ActorRef[Req] = mailbox.register(this)
 
-  override def run(): Unit = {
-    var behaviour = initialBehaviour
+  private[actor] def onMessage(message: Req): Unit = {
     try {
-      while (!(shutdown.get() && queue.isEmpty)) {
-        var message: Option[T] = None
-        try {
-          message = Option(queue.poll(1, SECONDS))
-        } catch {
-          case _: InterruptedException =>
-            currentThread.interrupt()
-            shutdown.set(true)
-        }
-        message match {
-          case Some(value) =>
-            try {
-              behaviour = behaviour.apply(value, ref)
-            } catch {
-              case e: Exception =>
-                logger.log(Level.WARNING, s"Exception during processing of message with type ${if (message != null) message.getClass.getName else "null"}", e)
-            }
-          case _ => ()
-        }
-      }
-    } finally terminationJoin.countDown()
+      behaviour = behaviour.apply(message, ref)
+    } catch {
+      case e: Exception =>
+        logger.log(Level.WARNING, s"Exception during processing of message with type ${if (message != null) message.getClass.getName else "null"}", e)
+    }
   }
-
-  def shutdown(): Unit = {
-    shutdown.set(true)
-  }
-
-  def shutdownNow(): List[T] = {
-    shutdown.set(true)
-    val drainedTasks: util.List[T] = new util.ArrayList[T]
-    queue.drainTo(drainedTasks)
-    drainedTasks.asScala.toList
-  }
-
-  def isShutdown: Boolean = shutdown.get
-
-  @throws[InterruptedException]
-  def awaitTermination(): Unit = terminationJoin.await()
-
-  @throws[InterruptedException]
-  def awaitTermination(timeout: Timeout): Boolean = awaitTermination(timeout.duration.toMillis, MILLISECONDS)
-
-  @throws[InterruptedException]
-  def awaitTermination(timeout: Long, unit: TimeUnit): Boolean = terminationJoin.await(timeout, unit)
-
-  def isTerminated: Boolean = terminationJoin.getCount <= 0
 }
