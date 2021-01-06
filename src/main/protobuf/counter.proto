@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+option java_package = "net.uweeisele.grpc";
+
+service AtomicCounter {
+  rpc Set(SetRequest) returns (SetResponse) {}
+  rpc CompareAndExchange(CompareAndExchangeRequest) returns (CompareAndExchangeResponse) {}
+  rpc AddAndGet(AddAndGetRequest) returns (AddAndGetResponse) {}
+  rpc DecrementAndGet(DecrementAndGetRequest) returns (DecrementAndGetResponse) {}
+  rpc IncrementAndGet(IncrementAndGetRequest) returns (IncrementAndGetResponse) {}
+  rpc Get(GetRequest) returns (GetResponse) {}
+}
+
+message SetRequest {
+  sint64 counterValue = 1;
+}
+
+message SetResponse {}
+
+message CompareAndExchangeRequest {
+  sint64 expectedValue = 1;
+  sint64 updateValue = 2;
+}
+
+message CompareAndExchangeResponse {
+  bool success = 1;
+  sint64 witnessValue = 2;
+  sint64 expectedValue = 3;
+  sint64 currentValue = 4;
+}
+
+message AddAndGetRequest {
+  sint64 delta = 1;
+}
+
+message AddAndGetResponse {
+  sint64 counterValue = 1;
+}
+
+message DecrementAndGetRequest {}
+
+message DecrementAndGetResponse {
+  sint64 counterValue = 1;
+}
+
+message IncrementAndGetRequest {}
+
+message IncrementAndGetResponse {
+  sint64 counterValue = 1;
+}
+
+message GetRequest {}
+
+message GetResponse {
+  sint64 counterValue = 1;
+}
