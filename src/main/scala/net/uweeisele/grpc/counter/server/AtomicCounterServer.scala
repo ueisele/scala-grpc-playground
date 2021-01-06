@@ -30,7 +30,7 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     //worker = Worker(AtomicCounterBehaviourObj(0))
     server = NettyServerBuilder
       .forPort(50051)
-      //.maxConcurrentCallsPerConnection(1)
+      .maxConcurrentCallsPerConnection(1)
       .addService(AtomicCounterGrpc.bindService(AtomicCounterImpl(worker.ref), executionContext))
       //.addService(AtomicCounterGrpc.bindService(new AtomicCounterRefImpl(), executionContext))
       .build()
