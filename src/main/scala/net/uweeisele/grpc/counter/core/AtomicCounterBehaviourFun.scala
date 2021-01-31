@@ -1,7 +1,7 @@
 package net.uweeisele.grpc.counter.core
 
-import net.uweeisele.grpc.counter._
 import net.uweeisele.actor.Behaviour
+import net.uweeisele.grpc.counter._
 
 import java.util.logging.Logger
 

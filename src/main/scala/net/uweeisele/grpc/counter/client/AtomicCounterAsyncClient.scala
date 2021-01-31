@@ -3,11 +3,10 @@ package net.uweeisele.grpc.counter.client
 import com.google.common.util.concurrent.MoreExecutors
 import io.grpc.ForwardingClientCall.SimpleForwardingClientCall
 import io.grpc.netty.NettyChannelBuilder
-import io.grpc.{CallOptions, Channel, ClientCall, ClientInterceptor, ManagedChannel, ManagedChannelBuilder, Metadata, MethodDescriptor, Status}
-import net.uweeisele.grpc.counter.AtomicCounterGrpc.AtomicCounterStub
-import net.uweeisele.grpc.counter.{AtomicCounterGrpc, CompareAndExchangeRequest, GetRequest, IncrementAndGetRequest}
+import io.grpc._
+import net.uweeisele.grpc.counter.{AtomicCounterGrpc, CompareAndExchangeRequest, GetRequest}
 
-import java.util.concurrent.{Executor, TimeUnit}
+import java.util.concurrent.TimeUnit
 import java.util.logging.{Level, Logger}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -34,7 +33,7 @@ object AtomicCounterAsyncClient {
         )
       } yield response
       println("Executed all queries")
-      Await.result(Future.sequence(responses), 10.seconds)
+      Await.result(Future.sequence(responses), 120.seconds)
       println("Completed :)")
     } finally {
       channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
@@ -65,7 +64,10 @@ object AtomicCounterAsyncClient {
                   responseListener.onMessage(message)
                 }
 
-                override def onClose(status: Status, trailers: Metadata): Unit = responseListener.onClose(status, trailers)
+                override def onClose(status: Status, trailers: Metadata): Unit = {
+                  println(s"onClose => thread: ${Thread.currentThread().getName}")
+                  responseListener.onClose(status, trailers)
+                }
 
                 override def onReady(): Unit = responseListener.onReady()
               }, headers)

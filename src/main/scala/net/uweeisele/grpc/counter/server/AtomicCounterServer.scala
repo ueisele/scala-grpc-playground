@@ -2,6 +2,7 @@ package net.uweeisele.grpc.counter.server
 
 import io.grpc._
 import io.grpc.netty.NettyServerBuilder
+import monix.execution.Scheduler
 import net.uweeisele.actor.ActorSystem
 import net.uweeisele.grpc.counter.AtomicCounterGrpc
 import net.uweeisele.grpc.counter.core.AtomicCounterBehaviourFun
@@ -14,14 +15,14 @@ object AtomicCounterServer {
   private val logger = Logger.getLogger(classOf[AtomicCounterServer].getName)
 
   def main(args: Array[String]): Unit = {
-    implicit val ec: ExecutionContext = ExecutionContext.global
+    implicit val scheduler: Scheduler = Scheduler(ExecutionContext.global)
     val server = new AtomicCounterServer()
     server.start()
     server.blockUntilShutdown()
   }
 }
 
-class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
+class AtomicCounterServer(implicit scheduler: Scheduler) { self =>
   implicit private[this] var actorSystem: ActorSystem = null
   private[this] var server: Server = null
 
@@ -32,7 +33,7 @@ class AtomicCounterServer(implicit executionContext: ExecutionContext) { self =>
     server = NettyServerBuilder
       .forPort(50051)
       .maxConcurrentCallsPerConnection(1)
-      .addService(AtomicCounterGrpc.bindService(AtomicCounterImpl(actor.ref), executionContext))
+      .addService(AtomicCounterGrpc.bindService(AtomicCounterImpl(actor), scheduler))
       //.addService(AtomicCounterGrpc.bindService(new AtomicCounterRefImpl(), executionContext))
       .build()
       .start()

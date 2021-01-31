@@ -1,37 +1,36 @@
 package net.uweeisele.actor
 
-import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
+import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 
 object ActorSystem {
-  def apply()(implicit ex: ExecutionContext): ActorSystem = new ActorSystem()
+  def apply(numWorkers: Int = 1)(implicit ex: ExecutionContext): ActorSystem = new ActorSystem(numWorkers)
 }
 
-class ActorSystem(implicit ex: ExecutionContext) {
+class ActorSystem(numWorkers: Int)(implicit ex: ExecutionContext) {
 
-  private val mailbox: Mailbox = new Mailbox(new LinkedBlockingQueue[Envelope[_]]())
-  private val worker: ActorWorker = ActorWorker(mailbox)
+  private val workers: ActorWorkerPool = ActorWorkerPool(numWorkers)
 
-  def actor[Req](behaviour: Behaviour[Req]): Actor[Req] = new Actor[Req](behaviour, mailbox)
+  def actor[Req](behaviour: Behaviour[Req]): ActorRef[Req] = new Actor[Req](behaviour, workers.next().mailbox).ref
 
   def shutdown(): Unit = {
-    worker.shutdown()
+    workers.shutdown()
   }
 
   def shutdownNow(): Unit = {
-    worker.shutdownNow()
+    workers.shutdownNow()
   }
 
-  def isShutdown: Boolean = worker.isShutdown
+  def isShutdown: Boolean = workers.isShutdown
 
   @throws[InterruptedException]
-  def awaitTermination(): Unit = worker.awaitTermination()
+  def awaitTermination(): Unit = workers.awaitTermination()
 
   @throws[InterruptedException]
-  def awaitTermination(timeout: Timeout): Boolean = worker.awaitTermination(timeout)
+  def awaitTermination(timeout: Timeout): Boolean = workers.awaitTermination(timeout)
 
   @throws[InterruptedException]
-  def awaitTermination(timeout: Long, unit: TimeUnit): Boolean = worker.awaitTermination(timeout, unit)
+  def awaitTermination(timeout: Long, unit: TimeUnit): Boolean = workers.awaitTermination(timeout, unit)
 
-  def isTerminated: Boolean = worker.isTerminated
+  def isTerminated: Boolean = workers.isTerminated
 }

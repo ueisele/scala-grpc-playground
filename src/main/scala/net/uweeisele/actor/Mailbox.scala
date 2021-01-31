@@ -1,17 +1,22 @@
 package net.uweeisele.actor
 
 import java.util
-import java.util.concurrent.{BlockingQueue, TimeUnit}
+import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue, TimeUnit}
 import scala.jdk.CollectionConverters._
 
 trait Receiver[-Req] {
-  private[actor] def onMessage(message: Req): Unit
+  def onMessage(message: Req): Unit
 }
 
 case class Envelope[Req](message: Req, onMessage: Receiver[Req])
 
+object Mailbox {
+  def apply(): Mailbox = new Mailbox(new LinkedBlockingQueue[Envelope[_]]())
+}
+
 class Mailbox(queue: BlockingQueue[Envelope[_ <: Any]]) {
-  def register[Req](onMessage: Receiver[Req]): ActorRef[Req] = message => if (message != null) queue.put(Envelope(message, onMessage))
+
+  def subscribe[Req](receiver: Receiver[Req]): ActorRef[Req] = message => queue.put(Envelope(message, receiver))
 
   def isEmpty: Boolean = queue.isEmpty
 

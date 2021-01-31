@@ -2,6 +2,7 @@ package net.uweeisele.grpc.counter.client
 
 import io.grpc._
 import io.grpc.netty.NettyChannelBuilder
+import io.netty.channel.ChannelFactory
 import net.uweeisele.grpc.counter.{AtomicCounterGrpc, GetRequest, IncrementAndGetRequest}
 
 import java.util.concurrent.TimeUnit
@@ -17,8 +18,8 @@ object AtomicCounterAsyncMultiClient {
 
   def main(args: Array[String]): Unit = {
     implicit val ec: ExecutionContext = ExecutionContext.global
-    val expectedClients = 100
-    val expectedCallsPerClient = 100
+    val expectedClients = 2
+    val expectedCallsPerClient = 10
     val currentValue = getCurrentCounterValue()
     println(s"Current Value: ${currentValue}")
     val clients: ListBuffer[Future[Long]] = ListBuffer()

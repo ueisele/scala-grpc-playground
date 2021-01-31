@@ -16,23 +16,23 @@ object ActorWorker {
   }
 }
 
-class ActorWorker(mailbox: Mailbox) extends Runnable {
+class ActorWorker(val mailbox: Mailbox) extends Runnable {
 
   private[this] val logger = Logger.getLogger(ActorWorker.getClass.getName)
 
-  private[this] val shutdown: AtomicBoolean = new AtomicBoolean(false)
+  private[this] val shutdownFlag: AtomicBoolean = new AtomicBoolean(false)
   private[this] val terminationJoin: CountDownLatch = new CountDownLatch(1)
 
   override def run(): Unit = {
     try {
-      while (!(shutdown.get() && mailbox.isEmpty)) {
+      while (!(isShutdown && mailbox.isEmpty)) {
         var envelope: Option[Envelope[_ <: Any]] = None
         try {
           envelope = mailbox.poll(1.second)
         } catch {
           case _: InterruptedException =>
             currentThread.interrupt()
-            shutdown.set(true)
+            shutdown()
         }
         envelope match {
           case Some(Envelope(message, receiver)) =>
@@ -49,15 +49,15 @@ class ActorWorker(mailbox: Mailbox) extends Runnable {
   }
 
   def shutdown(): Unit = {
-    shutdown.set(true)
+    shutdownFlag.set(true)
   }
 
   def shutdownNow(): List[Envelope[_ <: Any]] = {
-    shutdown.set(true)
+    shutdownFlag.set(true)
     mailbox.drain()
   }
 
-  def isShutdown: Boolean = shutdown.get
+  def isShutdown: Boolean = shutdownFlag.get
 
   @throws[InterruptedException]
   def awaitTermination(): Unit = terminationJoin.await()

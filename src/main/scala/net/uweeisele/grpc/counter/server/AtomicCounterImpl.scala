@@ -1,29 +1,30 @@
 package net.uweeisele.grpc.counter.server
 
+import monix.execution.Scheduler
+import net.uweeisele.actor.AskPattern.Askable
+import net.uweeisele.actor.{ActorRef, Timeout}
 import net.uweeisele.grpc.counter.AtomicCounterGrpc.AtomicCounter
 import net.uweeisele.grpc.counter._
 import net.uweeisele.grpc.counter.core._
-import net.uweeisele.actor.AskPattern.Askable
-import net.uweeisele.actor.{Timeout, ActorRef}
 
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, Future}
 
 object AtomicCounterImpl {
-  def apply(worker: ActorRef[AtomicCounterMessage])(implicit timeout: Timeout = 10.seconds, ec: ExecutionContext = ExecutionContext.global): AtomicCounterImpl = new AtomicCounterImpl(worker)
+  def apply(actorRef: ActorRef[AtomicCounterMessage])(implicit timeout: Timeout = 10.seconds, scheduler: Scheduler): AtomicCounterImpl = new AtomicCounterImpl(actorRef)
 }
 
-class AtomicCounterImpl(worker: ActorRef[AtomicCounterMessage])(implicit timeout: Timeout, ec: ExecutionContext) extends AtomicCounter {
+class AtomicCounterImpl(actorRef: ActorRef[AtomicCounterMessage])(implicit timeout: Timeout, scheduler: Scheduler) extends AtomicCounter {
 
-  override def set(request: SetRequest): Future[SetResponse] = worker ? (replyTo => SetCommand(request, replyTo))
+  override def set(request: SetRequest): Future[SetResponse] = actorRef ? (replyTo => SetCommand(request, replyTo))
 
-  override def compareAndExchange(request: CompareAndExchangeRequest): Future[CompareAndExchangeResponse] = worker ? (replyTo => CompareAndExchangeCommand(request, replyTo))
+  override def compareAndExchange(request: CompareAndExchangeRequest): Future[CompareAndExchangeResponse] = actorRef ? (replyTo => CompareAndExchangeCommand(request, replyTo))
 
-  override def addAndGet(request: AddAndGetRequest): Future[AddAndGetResponse] = worker ? (replyTo => AddAndGetCommand(request, replyTo))
+  override def addAndGet(request: AddAndGetRequest): Future[AddAndGetResponse] = actorRef ? (replyTo => AddAndGetCommand(request, replyTo))
 
-  override def decrementAndGet(request: DecrementAndGetRequest): Future[DecrementAndGetResponse] = worker ? (replyTo => DecrementAndGetCommand(request, replyTo))
+  override def decrementAndGet(request: DecrementAndGetRequest): Future[DecrementAndGetResponse] = actorRef ? (replyTo => DecrementAndGetCommand(request, replyTo))
 
-  override def incrementAndGet(request: IncrementAndGetRequest): Future[IncrementAndGetResponse] = worker ? (replyTo => IncrementAndGetCommand(request, replyTo))
+  override def incrementAndGet(request: IncrementAndGetRequest): Future[IncrementAndGetResponse] = actorRef ? (replyTo => IncrementAndGetCommand(request, replyTo))
 
-  override def get(request: GetRequest): Future[GetResponse] = worker ? (replyTo => GetCommand(request, replyTo))
+  override def get(request: GetRequest): Future[GetResponse] = actorRef ? (replyTo => GetCommand(request, replyTo))
 }
